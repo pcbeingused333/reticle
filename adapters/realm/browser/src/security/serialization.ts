@@ -110,6 +110,9 @@ function sanitize(value: unknown, state: SanitizeState, depth: number, key?: str
   }
   const opaque = opaqueSummary(value);
   if (opaque !== undefined) {
+    // The summary replaces the value's fields, so a state or network read must declare it (AGENTS.md rule 11):
+    // a thenable can be ordinary app data, and without this count it would read as complete.
+    state.truncatedValues += 1;
     return boundedString(opaque, state, MAX_KEY_LENGTH);
   }
   // An invalid Date (`new Date(NaN)` / `new Date(undefined)`, easy to land in app state) throws

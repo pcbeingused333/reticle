@@ -487,6 +487,23 @@ describe('sanitizeForTransport — DOM nodes, windows, promises and thenables (#
     expect(reads).toEqual([]);
   });
 
+  it('declares each summary in the truncation report, so a state read does not look complete', () => {
+    const { value, truncation } = sanitizeWithReport({
+      a: Promise.resolve(1),
+      b: { then: () => undefined },
+      c: document.createElement('input'),
+      d: 'plain',
+    });
+
+    expect(value).toEqual({ a: '[Promise]', b: '[Promise]', c: '[HTMLInputElement]', d: 'plain' });
+    expect(truncation?.truncatedValues).toBe(3);
+    expect(truncation?.note).toContain('3 value(s) truncated');
+  });
+
+  it('reports nothing for a value that holds no node, window or thenable', () => {
+    expect(sanitizeWithReport({ a: 1, b: ['x'] }).truncation).toBeUndefined();
+  });
+
   it('keeps a plain object that only looks like a node', () => {
     expect(sanitizeForTransport({ nodeType: 1, nodeName: 'DIV', id: 7 })).toEqual({
       nodeType: 1,
