@@ -1,0 +1,3 @@
+### Fixed
+
+- **`@reticlehq/browser`: console capture no longer walks DOM nodes, windows and promises in a logged object.** `console.log(errors)` in a React Hook Form `onInvalid` handler logs a field `ref`, which is a DOM element. The capture followed it into React internals and into the Next.js `params` and `searchParams` promises. Next.js 16 reports each read of those promises as a console error, so one invalid submit showed four errors that the app did not cause, and a clean-console check failed because of Reticle. A DOM node now reads as its tag (for example `[HTMLInputElement]`), a window as `[Window]`, and a promise or other thenable as `[Promise]`. None of their keys is read. Closes [#1661](https://github.com/reticlehq/reticle/issues/1661).
