@@ -1,5 +1,5 @@
 import { captureValueSetter } from '@/patching/capture-method.js';
-import { type ActionTarget, isHtmlElement, valuePrototypeOf } from '@/dom/realm.js';
+import { type ActionTarget, isHtmlElement, isTextArea, valuePrototypeOf } from '@/dom/realm.js';
 
 /**
  * Writing a value into a field, and the two preconditions that make it honest.
@@ -78,11 +78,34 @@ function isRichText(el: ActionTarget): boolean {
   return null !== surface.editContext && undefined !== surface.editContext;
 }
 
+/** The roots Monaco and CodeMirror render around the hidden `<textarea>` that receives their input. */
+const EDITOR_ROOT = '.monaco-editor, .CodeMirror, .cm-editor';
+
+/**
+ * A `<textarea>` that is the input surface of a code editor, not a plain field.
+ *
+ * Monaco keeps its input in a hidden `<textarea role="textbox">` and merges whatever is written
+ * there with its own model, so a direct value write reports `valueChanged:true` while the editor
+ * ends up with the old and new text together. An explicit `role="textbox"` or a known editor root
+ * marks it; a bare `<textarea>` is a real field and still fills.
+ */
+function isEditorTextArea(el: ActionTarget): boolean {
+  if (!isTextArea(el)) return false;
+  return 'textbox' === el.getAttribute('role') || null !== el.closest(EDITOR_ROOT);
+}
+
+function refuseEditor(action: string): never {
+  throw new Error(`cannot ${action} a contenteditable or EditContext editor; use press or an input`);
+}
+
 export function assertNotRichText(el: ActionTarget, action: string): void {
   if (!isRichText(el)) return;
-  throw new Error(
-    `cannot ${action} a contenteditable or EditContext editor; use press or an input`,
-  );
+  refuseEditor(action);
+}
+
+/** Refuse a value write into an editor's `<textarea>` before the plain-field branch takes it. */
+export function assertNotEditorTextArea(el: ActionTarget, action: string): void {
+  if (isEditorTextArea(el)) refuseEditor(action);
 }
 
 export function assertEditable(el: HTMLInputElement | HTMLTextAreaElement, action: string): void {
