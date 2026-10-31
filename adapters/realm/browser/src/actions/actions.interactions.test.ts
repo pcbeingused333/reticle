@@ -311,10 +311,7 @@ describe('a contenteditable target is refused legibly', () => {
    */
   it.each([
     ['an explicit role=textbox', '<textarea id="ta" role="textbox">old</textarea>'],
-    [
-      'a Monaco root',
-      '<div class="monaco-editor"><textarea id="ta">old</textarea></div>',
-    ],
+    ['a Monaco root', '<div class="monaco-editor"><textarea id="ta">old</textarea></div>'],
     ['a CodeMirror root', '<div class="CodeMirror"><textarea id="ta">old</textarea></div>'],
   ])('refuses fill, type and clear on a textarea inside %s', async (_name, html) => {
     document.body.innerHTML = html;
