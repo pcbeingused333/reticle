@@ -94,9 +94,6 @@
     }
   },
   "src/evidence/baseline.ts": {
-    "curly": {
-      "count": 9
-    },
     "no-nested-ternary": {
       "count": 1
     }

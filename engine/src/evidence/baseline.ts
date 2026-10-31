@@ -47,19 +47,25 @@ function leavesNeedingBaseline(predicate: Predicate, into: Predicate[]): void {
   switch (predicate.kind) {
     case PredicateKind.ALL_OF:
     case PredicateKind.ANY_OF:
-      for (const part of predicate.predicates) leavesNeedingBaseline(part, into);
+      for (const part of predicate.predicates) {
+        leavesNeedingBaseline(part, into);
+      }
       return;
     case PredicateKind.NOT:
       leavesNeedingBaseline(predicate.predicate, into);
       return;
     default:
-      if (asksForComparison(predicate)) into.push(predicate);
+      if (asksForComparison(predicate)) {
+        into.push(predicate);
+      }
   }
 }
 
 /** Does the whole tree need a pre-action reading at all? One walk, so the caller pays nothing. */
 export function needsBaseline(predicate: Predicate | undefined): boolean {
-  if (predicate === undefined) return false;
+  if (predicate === undefined) {
+    return false;
+  }
   const found: Predicate[] = [];
   leavesNeedingBaseline(predicate, found);
   return found.length > 0;
@@ -74,7 +80,9 @@ async function readStateValue(
       ? { path: predicate.path }
       : { store: predicate.store, path: predicate.path };
   const read = await session.command(ReticleCommand.STATE_READ, args);
-  if (!read.ok) return undefined;
+  if (!read.ok) {
+    return undefined;
+  }
   const reply = (read.result ?? {}) as { found?: unknown; value?: unknown };
   // `found: false` is a reading — the path held nothing — and it is NOT the same as "nobody
   // looked". Only an unreadable store returns undefined above.
@@ -97,10 +105,14 @@ async function readText(
     return undefined;
   }
   const elements = (match as { elements?: unknown }).elements;
-  if (!Array.isArray(elements)) return undefined;
+  if (!Array.isArray(elements)) {
+    return undefined;
+  }
   const text = elements
     .map((element: unknown) => {
-      if ('object' !== typeof element || null === element) return '';
+      if ('object' !== typeof element || null === element) {
+        return '';
+      }
       const value = (element as { text?: unknown }).text;
       return 'string' === typeof value ? value : '';
     })
@@ -122,7 +134,9 @@ export async function captureBaselines(
   predicate: Predicate | undefined,
 ): Promise<ReadonlyMap<Predicate, Baseline>> {
   const captured = new Map<Predicate, Baseline>();
-  if (predicate === undefined) return captured;
+  if (predicate === undefined) {
+    return captured;
+  }
   const leaves: Predicate[] = [];
   leavesNeedingBaseline(predicate, leaves);
   for (const leaf of leaves) {
@@ -133,7 +147,9 @@ export async function captureBaselines(
           : PredicateKind.TEXT === leaf.kind
             ? await readText(session, leaf)
             : undefined;
-      if (reading !== undefined) captured.set(leaf, reading);
+      if (reading !== undefined) {
+        captured.set(leaf, reading);
+      }
     } catch {
       // A reading that could not be taken leaves the leaf with no baseline, which the evaluator
       // reports as `inconclusive`. Throwing here would lose the whole verdict for one unreadable
