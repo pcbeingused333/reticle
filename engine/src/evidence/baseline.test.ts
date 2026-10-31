@@ -111,3 +111,64 @@ describe('the pre-action check skips a relative leaf', () => {
     );
   });
 });
+
+/*
+ * A page whose SDK predates `matchCase` (or reports no version) refuses the whole query for that
+ * key. The baseline read used to give up on that refusal, so a `changed` text check had nothing to
+ * compare against and never graded. It now asks again without the key, like the verdict does.
+ */
+describe('a text baseline on an SDK that refuses matchCase', () => {
+  const REFUSAL = "Unrecognized key(s) in object: 'matchCase'";
+
+  function oldPage(texts: string[], refusal = REFUSAL): PredicateSession {
+    let reads = 0;
+    return {
+      id: 's1',
+      url: 'http://localhost/',
+      elapsed: () => 0,
+      eventsSince: () => [],
+      command: (_name: string, args: unknown): Promise<CommandResult> => {
+        const query = (args as { query: Record<string, unknown> }).query;
+        if ('matchCase' in query) {
+          return Promise.resolve({ kind: 'command_result', id: 'c', ok: false, error: refusal });
+        }
+        const text = texts[Math.min(reads++, texts.length - 1)] ?? '';
+        const elements = [
+          { ref: 'e0', role: 'paragraph', name: '', text, states: [], visible: true },
+        ];
+        return Promise.resolve({
+          kind: 'command_result',
+          id: 'c',
+          ok: true,
+          result: { matched: true, count: 1, elements, fullText: true },
+        });
+      },
+    } as unknown as PredicateSession;
+  }
+
+  const changed = parsePredicate({
+    kind: 'text',
+    contains: 'Total',
+    satisfies: { property: 'changed' },
+  });
+
+  it('still takes the baseline, so a changed text grades yes', async () => {
+    const page = oldPage(['Total 10', 'Total 12']);
+    const baselines = await captureBaselines(page, changed);
+    expect(baselines.size).toBe(1);
+    expect((await evaluatePredicate(page, changed, 0, false, baselines)).pass).toBe(true);
+  });
+
+  it('grades an unchanged text no', async () => {
+    const page = oldPage(['Total 10', 'Total 10']);
+    const baselines = await captureBaselines(page, changed);
+    const result = await evaluatePredicate(page, changed, 0, false, baselines);
+    expect(result.pass).toBe(false);
+    expect(result.inconclusive).toBeUndefined();
+  });
+
+  it('still gives no baseline when the refusal is about something else', async () => {
+    const page = oldPage(['Total 10'], 'the matcher threw: boom');
+    expect((await captureBaselines(page, changed)).size).toBe(0);
+  });
+});

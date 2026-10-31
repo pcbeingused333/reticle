@@ -190,7 +190,7 @@ function matchNotServedMessage(
   );
 }
 
-async function matchOnce(
+export async function matchOnce(
   session: PredicateSession,
   query: ElementQuery,
   state: ElementState | undefined,
