@@ -5,7 +5,7 @@ import {
   InputMode,
   VIEWPORT_NO_PROVIDER_RECOMMENDATION,
 } from '@reticlehq/core';
-import { VIEWPORT_TOOLS, leaseEmulationOf } from './viewport-tools.js';
+import { LEASE_EMULATE_ARG, VIEWPORT_TOOLS, leaseEmulationOf } from './viewport-tools.js';
 import { HEADLESS_VIEWPORT } from '@/chromium-launch-options.js';
 import { contextEmulationOf } from '@/portal/pool/lease-emulation.js';
 import { ReticleTool } from '@reticlehq/core';
@@ -355,5 +355,11 @@ describe('a lease that names only one side of the viewport', () => {
     expect(leaseEmulationOf({ height: 600 })).toEqual({
       viewport: { width: HEADLESS_VIEWPORT.width, height: 600 },
     });
+  });
+
+  it('states the default size in the argument description from the same constant', () => {
+    expect(LEASE_EMULATE_ARG.description).toContain(
+      `(${HEADLESS_VIEWPORT.width} by ${HEADLESS_VIEWPORT.height})`,
+    );
   });
 });

@@ -53,7 +53,7 @@ const EmulateSchema = z
 
 export const LEASE_EMULATE_ARG = EmulateSchema.optional().describe(
   'Open the lease with these set before the first paint: { colorScheme, reducedMotion, width, height, pointer }. ' +
-    'A side you leave out keeps its default (1440 by 900). Change the media and the size later with ' +
+    `A side you leave out keeps its default (${DEFAULT_WIDTH} by ${DEFAULT_HEIGHT}). Change the media and the size later with ` +
     'reticle_viewport; `pointer` cannot change on an open lease, so a touch-only rule needs a lease ' +
     'acquired with pointer: "coarse".',
 );
